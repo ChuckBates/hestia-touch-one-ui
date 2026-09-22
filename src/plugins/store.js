@@ -95,6 +95,7 @@ export default new Vuex.Store({
     incrementTargetValue,
     selectMode,
     selectPowerSetting,
+    setBacklight,
     toggleInfoScreen
   }
 })
@@ -426,6 +427,15 @@ function selectPowerSetting(state, { mode, powerOption }) {
 
 function toggleInfoScreen(state) {
   state.showInfoScreen = !state.showInfoScreen
+}
+
+// Publish a backlight command. A backend subscriber (see hestia-touch-openhab)
+// listens on this topic and toggles the physical LCD backlight.
+function setBacklight(state, on) {
+  const topic = 'hestia/local/cmnd/backlight'
+  const payload = on ? 'ON' : 'OFF'
+  console.debug(`[sending] ${topic}: ${payload}`)
+  client.publish(topic, payload)
 }
 
 function updateMode(state, mode) {
