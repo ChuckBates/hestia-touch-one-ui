@@ -7,7 +7,9 @@
     "serve": "vite serve",
     "build": "vite build",
     "lint": "eslint .",
-    "deploy": "ssh pi@$HESTIA 'rm -r scripts/oneui/*' && scp -r dist/* pi@$HESTIA:scripts/oneui && ssh pi@$HESTIA 'sudo killall -TERM kweb'"
+    "deploy": "npm run backup && vite build && if [ ! -f dist/index.html ] || grep -qE '<script[^>]*src=' dist/index.html; then echo 'ERROR: build not inlined (no dist/index.html, or an external <script src=> remains). Aborting before touching the Pi.'; exit 1; fi && ssh pi@$HESTIA 'sudo rm -rf /home/pi/scripts/oneui/* && mkdir -p /tmp/oneui-deploy' && scp -r dist/* pi@$HESTIA:/tmp/oneui-deploy/ && ssh pi@$HESTIA 'sudo cp -r /tmp/oneui-deploy/. /home/pi/scripts/oneui/ && rm -rf /tmp/oneui-deploy && sudo killall -TERM surf'",
+    "backup": "ssh pi@$HESTIA 'DATE=$(date +%-m-%-d-%y) && sudo mkdir -p /home/pi/backups/$DATE && sudo tar czf /home/pi/backups/$DATE/oneui.backup.tar.gz /home/pi/scripts/oneui && ls -l /home/pi/scripts/oneui | sudo tee /home/pi/backups/$DATE/js-builds.txt >/dev/null && echo UI backup OK'",
+    "rollback": "ssh pi@$HESTIA 'sudo tar xzf /home/pi/backups/$(date +%-m-%-d-%y)/oneui.backup.tar.gz -C / && sudo killall -TERM kweb && echo UI rollback complete'"
   },
   "engines": {
     "node": ">=24"
@@ -23,6 +25,8 @@
     "@vitejs/plugin-vue2": "^2.3.4",
     "eslint": "^9.39.2",
     "eslint-plugin-vue": "^10.7.0",
-    "vite": "^4.5.14"
+    "vite": "^4.5.14",
+    "vite-plugin-node-polyfills": "^0.17.0",
+    "vite-plugin-singlefile": "^0.13.5"
   }
 }
